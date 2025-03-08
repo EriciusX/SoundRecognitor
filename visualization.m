@@ -27,7 +27,7 @@ hold on;
 for i = 1:length(speakerList)
     trainingFile = sprintf(trainingFiles, speakerList(i));
 
-    mfcc_features = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc_selected(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_features = mfcc_features';
     scatter(mfcc_features(:, dim1), mfcc_features(:, dim2), 10, colors(i,:));
 end
@@ -52,7 +52,7 @@ for i = 1:length(speakerList)
     audioFile = sprintf(trainingFiles, speaker);
     
     % Extract MFCC features; mfcc_features is (numMfccCoeffs-1) x num_frames
-    mfcc_features = mfcc(audioFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc_selected(audioFile, frameLength, numMelFilters, numMfccCoeffs);
     % Transpose so that each row is one frame's feature vector
     mfcc_features = mfcc_features';
     
@@ -65,8 +65,8 @@ end
 features_spk2 = allFeatures(allLabels == 2, :);
 features_spk10 = allFeatures(allLabels == 10, :);
 
-[codeword2, ~] = vq_lbg(features_spk2, targetCodebookSize, epsilon, tol);
-[codeword10, ~] = vq_lbg(features_spk10, targetCodebookSize, epsilon, tol);
+codeword2 = vq_lbg(features_spk2, targetCodebookSize, epsilon, tol);
+codeword10 = vq_lbg(features_spk10, targetCodebookSize, epsilon, tol);
 
 figure;
 hold on;

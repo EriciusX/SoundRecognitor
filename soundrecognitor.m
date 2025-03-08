@@ -11,7 +11,7 @@ testFiles     = './GivenSpeech_Data/Test_Data/s%d.wav';
 % MFCC parameters
 frameLength = 512;       % Frame length in samples
 numMelFilters = 20;      % Number of Mel filter banks
-numMfccCoeffs = 13;      % Total number of MFCC coefficients
+numMfccCoeffs = 20;      % Total number of MFCC coefficients
 
 % VQ-LBG parameters
 targetCodebookSize = 8;  % 目标码本大小（码元个数）
@@ -26,7 +26,7 @@ for i = 1:numTrainingFiles
     trainingFile = sprintf(trainingFiles, i);
   
     % Extract MFCC features for current speaker
-    mfcc_training = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_training = mfcc_selected(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
     
     % Compute VQ codebook for the current speaker using the LBG algorithm
     codebook = vq_lbg(mfcc_training', targetCodebookSize, epsilon, tol);
@@ -42,7 +42,7 @@ for i = 1:numTestFiles
     testFile = sprintf(testFiles, i);
     
     % Extract MFCC features for the test file
-    mfcc_test = mfcc(testFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_test = mfcc_selected(testFile, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_test = mfcc_test'; 
     
     % Compute average distortion for each speaker's codebook
