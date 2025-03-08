@@ -114,11 +114,14 @@ ylabel('MFCC Coefficient');
 title(sprintf('MFCC Features (Frame Size = %d)', N));
 
 %% Select frames with highest energy
-% Select frames with high energy
+% Compute the energy of each frame
 energy_per_frame = sum(stft_result, 1);
-[sorted_energy, sorted_indices] = sort(energy_per_frame, 'descend');
-num_selected_frames = ceil(num_frames*0.8);
-selected_frames_indices = sorted_indices(1:num_selected_frames);
+
+% Compute the threshold
+threshold = quantile(energy_per_frame, 1 - 0.8);
+
+% Select frame indices where energy is above or equal to the threshold 
+selected_frames_indices = find(energy_per_frame >= threshold);
 
 % Extract the selected frames
 selected_stft_result_db = stft_result_db(:, selected_frames_indices);
@@ -134,6 +137,7 @@ title('STFT Spectrogram of Selected Frames with Highest Energy');
 
 %% Compute MFCC features for selected frames
 % Initialize MFCC matrix
+num_selected_frames = length(selected_frames_indices);
 selected_mfcc_features = zeros(mfcc_coeff-1, num_selected_frames);
 
 % Compute MFCC for each frame
@@ -156,8 +160,8 @@ t = ((selected_frames_indices-1) * M) / Fs * 1000;  % Time in milliseconds
 
 % Plot MFCC features of selected frames
 figure;
-imagesc(t, 2:mfcc_coeff, selected_mfcc_features);
+imagesc(num_selected_frames, 2:mfcc_coeff, selected_mfcc_features);
 colorbar;
-xlabel('Time (ms)');
+xlabel('Frames');
 ylabel('MFCC Coefficient');
 title(sprintf('MFCC Features of Selected Frames (Frame Size = %d)', N));

@@ -37,37 +37,21 @@ function mfcc_features = mfcc_selected(file_name, N, num_mel_filters, mfcc_coeff
 
     stft_result = stft_result(1:N/2+1, :);
 
-    % % Compute MFCC for each frame
-    % for i = 1:num_frames
-    %     frame_start = (i-1)*M + 1;
-    %     frame = y(frame_start:frame_start+N-1) .* window;
-        
-    %     % Power spectrum
-    %     power_spectrum = abs(fft(frame)).^2;
-    %     power_spectrum = power_spectrum(1:N/2+1);
-        
-    %     % Apply mel filterbank
-    %     mel_energies = mel_filters * power_spectrum;
-        
-    %     % Apply DCT to get MFCC
-    %     mfcc = dct(log(mel_energies(1:mfcc_coeff)));
-        
-    %     % Keep only the specified number of coefficients
-    %     mfcc_features(:, i) = mfcc(2:end);
-    % end
-
-    % Select frames with high energy
+    % Compute the energy of each frame
     energy_per_frame = sum(stft_result, 1);
-    [sorted_energy, sorted_indices] = sort(energy_per_frame, 'descend');
-    num_selected_frames = ceil(num_frames*selected);
-    selected_frames_indices = sorted_indices(1:num_selected_frames);
 
-    selected_mfcc_features = zeros(mfcc_coeff-1, num_selected_frames);
+    % Compute the threshold
+    threshold = quantile(energy_per_frame, 1 - selected);
+
+    % Select frame indices where energy is above or equal to the threshold 
+    selected_frames_indices = find(energy_per_frame >= threshold);
+
+    % Extract the selected frames
+    selected_stft_result = stft_result(:, selected_frames_indices);
 
     % Compute MFCC for each frame
-    for i = 1:num_selected_frames
-        frame_idx = selected_frames_indices(i);
-        power_spectrum = stft_result(:, frame_idx);
+    for i = 1:length(selected_frames_indices)
+        power_spectrum = selected_stft_result(:, i);
         
         % Apply mel filterbank
         mel_energies = mel_filters * power_spectrum;
