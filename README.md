@@ -4,7 +4,7 @@ This is a project for EEC 201 25W.
 
 Team name: '**x**'
 
-Team members: Chenghao Xue, Guanyu Mi.
+Team members: **Chenghao Xue**, **Guanyu Mi**.
 
 ## File Description
 ### Files
@@ -94,3 +94,42 @@ MFCC results for speaker 2 and 10 in 6 and 7 dimensions.
 Calculate the VQ codewords in test5 and plot them on the same figure.
 
 ![MFCC_Space](./results/MFCC%20Space%20with%20VQ.png)
+
+---
+
+### Test 7
+Prediction results.
+
+![Test7](./results/Test7.png)
+
+---
+
+### Test 8
+Predict the result after notch filter.
+
+![Test8](./results/Test8.png)
+
+---
+
+### Test 10a
+Question 1:
+
+![Test10a_0](./results/Test10a_0.png)
+![Test10a_12](./results/Test10a_12.png)
+
+Question 2:
+
+![Test10a_combine](./results/Test10a_combine.png)
+
+---
+
+### Test 10b
+
+Question 3:
+
+![Test10b_5](./results/Test10b_5.png)
+![Test10b_11](./results/Test10b_11.png)
+
+Question 4:
+
+![Test10b_combine](./results/Test10b_combine.png)
