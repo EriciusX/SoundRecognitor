@@ -7,14 +7,33 @@ Team name: '**x**'
 Team members: Chenghao Xue, Guanyu Mi.
 
 ## File Description
+### Files
+| Name              | Description                                        |
+| ----------------- | -------------------------------------------------- |
+| soundrecognitor.m | Main program, used for training and testing data   |
+| visualization.m   | For visualization programs                         |
+| mfcc.m            | Function to generate MFCC features                 |
+| vq_lbg.m          | Function to get VQ codeword based on LBG algorithm |
 
-| Name              | Description                                           |
-| ----------------- | ----------------------------------------------------- |
-| soundrecognitor.m | Main program, used for training and testing data      |
-| visualization.m   | For visualization programs                            |
-| mfcc.m            | Featrue extraction using MFCC                         |
-| mfcc_selected.m   | Select the frames with highest power to generate MFCC |
-| vq_lbg            | Function to get VQ codeword based on LBG algorithm    |
+### Function parameter description
+
+#### mfcc
+ - Input:
+    - file_name: 
+    - N :
+    - num_mel_filters:
+    - mfcc_coeff:
+ - Output:
+    - mfcc_features:
+
+#### vq_lbg
+ - Input:
+    - mfcc    : MFCC matrix
+    - M       : The desired number of codewords in the final codebook
+    - epsilon : Splitting parameter (e.g., 0.01)
+    - tol     : Iteration stopping threshold (e.g., 1e-3)
+ - Output:
+    - codebook: An Mxd matrix, each row is one final codeword
 
 ## Result
 
@@ -22,7 +41,7 @@ Team members: Chenghao Xue, Guanyu Mi.
 
 | Test case    | s1 | s2 | s3 | s4 | s5 | s6 | s7 | s8 |
 | ------------ | -- | -- | -- | -- | -- | -- | -- | -- |
-| what I heard | s1 | s2 | s7 | s3 | s4 | s5 | s6 | s7 |
+| What I heard | s1 | s2 | s7 | s3 | s4 | s5 | s6 | s7 |
 
 Recognition Rate: 87.50%
 

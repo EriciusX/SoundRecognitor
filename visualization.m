@@ -6,15 +6,22 @@ numTrainingFiles = 11;                                       % Number of trainin
 trainingFiles = './GivenSpeech_Data/Training_Data/s%d.wav';  % Files
 
 % MFCC parameters
-frameLength = 512;       % Frame length in samples
-numMelFilters = 20;      % Number of Mel filter banks
-numMfccCoeffs = 20;      % Total number of MFCC coefficients
+frameLength = 512;      % Frame length in samples
+numMelFilters = 20;     % Number of Mel filter banks
+numMfccCoeffs = 20;     % Total number of MFCC coefficients
 
 % VQ-LBG parameters
-targetCodebookSize = 8;  % The desired number of codewords in the final codebook
-epsilon = 0.01;          % Splitting parameter
-tol = 1e-3;              % Iteration stopping threshold
+targetCodebookSize = 8; % The desired number of codewords in the final codebook
+epsilon = 0.01;         % Splitting parameter
+tol = 1e-3;             % Iteration stopping threshold
 
+% Plotting parameters
+% e.g. We will plot the 6th and 7th MFCC coefficients of speaker 2 and 10
+dim1 = 6;
+dim2 = 7;
+speakerList = [2, 10]; % select 2 speakers
+
+% Screen parameters 
 screenSize = get(0, 'ScreenSize');
 screenWidth = screenSize(3);
 screenHeight = screenSize(4);
@@ -112,10 +119,10 @@ for i = 1:num_frames
     mel_energies = mel_filters * power_spectrum;
     
     % Apply DCT to get MFCC
-    mfcc_frame = dct(log(mel_energies(1:mfcc_coeff)));
+    mfcc_frames = dct(log(mel_energies(1:mfcc_coeff)));
     
     % Keep only the specified number of coefficients
-    mfcc_features(:, i) = mfcc_frame(2:end);
+    mfcc_features(:, i) = mfcc_frames(2:end);
 end
 
 % Create time vector for plotting
@@ -140,19 +147,20 @@ title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
 
 %% Test 5
 
-dim1 = 6;
-dim2 = 7;
-speakerList = [2, 10];
 colors = lines(length(speakerList));
 
+% Plot MFCC Space
 fig5 = figure;
 set(fig5, 'Position', [700, screenHeight-1000, 600, 400]);
 hold on;
+
 for i = 1:length(speakerList)
     trainingFile = sprintf(trainingFiles, speakerList(i));
 
+    % Extract MFCC features
     mfcc_features = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_features = mfcc_features';
+
     scatter(mfcc_features(:, dim1), mfcc_features(:, dim2), 10, colors(i,:));
 end
 
@@ -175,9 +183,8 @@ for i = 1:length(speakerList)
     speaker = speakerList(i);
     audioFile = sprintf(trainingFiles, speaker);
     
-    % Extract MFCC features; mfcc_features is (numMfccCoeffs-1) x num_frames
+    % Extract MFCC features
     mfcc_features = mfcc(audioFile, frameLength, numMelFilters, numMfccCoeffs);
-    % Transpose so that each row is one frame's feature vector
     mfcc_features = mfcc_features';
     
     % Append features to the combined matrix
@@ -192,6 +199,7 @@ features_spk10 = allFeatures(allLabels == 10, :);
 codeword2 = vq_lbg(features_spk2, targetCodebookSize, epsilon, tol);
 codeword10 = vq_lbg(features_spk10, targetCodebookSize, epsilon, tol);
 
+% Plot MFCC Space with VQ codewords
 fig6 = figure;
 set(fig6, 'Position', [1300, screenHeight-1000, 600, 400]);
 hold on;
@@ -206,6 +214,7 @@ scatter(codeword10(:, dim1), codeword10(:, dim2), 25, 'g', 'filled');
 title('MFCC Space with VQ Codebook');
 xlabel(sprintf('MFCC - %d', dim1));
 ylabel(sprintf('MFCC - %d', dim2));
-legend('Speaker2', 'Speaker10', 'Speaker2 VQ Codewords', 'Speaker10 VQ Codewords');
+legend([arrayfun(@(x) sprintf('Speaker %d', x), speakerList, 'UniformOutput', false),...
+        arrayfun(@(x) sprintf('Speaker %d with VQ codebook', x), speakerList, 'UniformOutput', false)]);
 grid()
 hold off;
