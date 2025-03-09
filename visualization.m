@@ -8,7 +8,7 @@ trainingFiles = './GivenSpeech_Data/Training_Data/s%d.wav';  % Files
 % MFCC parameters
 frameLength = 512;       % Frame length in samples
 numMelFilters = 20;      % Number of Mel filter banks
-numMfccCoeffs = 13;      % Total number of MFCC coefficients
+numMfccCoeffs = 20;      % Total number of MFCC coefficients
 
 % VQ-LBG parameters
 targetCodebookSize = 8;  % The desired number of codewords in the final codebook
@@ -112,10 +112,10 @@ for i = 1:num_frames
     mel_energies = mel_filters * power_spectrum;
     
     % Apply DCT to get MFCC
-    mfcc = dct(log(mel_energies(1:mfcc_coeff)));
+    mfcc_frame = dct(log(mel_energies(1:mfcc_coeff)));
     
     % Keep only the specified number of coefficients
-    mfcc_features(:, i) = mfcc(2:end);
+    mfcc_features(:, i) = mfcc_frame(2:end);
 end
 
 % Create time vector for plotting
@@ -151,7 +151,7 @@ hold on;
 for i = 1:length(speakerList)
     trainingFile = sprintf(trainingFiles, speakerList(i));
 
-    mfcc_features = mfcc_selected(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_features = mfcc_features';
     scatter(mfcc_features(:, dim1), mfcc_features(:, dim2), 10, colors(i,:));
 end
@@ -176,7 +176,7 @@ for i = 1:length(speakerList)
     audioFile = sprintf(trainingFiles, speaker);
     
     % Extract MFCC features; mfcc_features is (numMfccCoeffs-1) x num_frames
-    mfcc_features = mfcc_selected(audioFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc(audioFile, frameLength, numMelFilters, numMfccCoeffs);
     % Transpose so that each row is one frame's feature vector
     mfcc_features = mfcc_features';
     
