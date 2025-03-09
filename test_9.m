@@ -115,7 +115,7 @@ for i = 1:num_test_all
     
     % The predicted speaker is the one with the minimum average distortion
     [~, predicted] = min(distortions);
-    fprintf('True Speaker: %s,\n Predicted Speaker: %s\n\n', testSpeakers{i}, trainSpeakers{predicted});
+    fprintf('True Speaker: %s, Predicted Speaker: %s\n', testSpeakers{i}, trainSpeakers{predicted});
     
     if predicted == i
         correct = correct + 1;
