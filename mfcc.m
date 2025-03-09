@@ -1,4 +1,3 @@
-
 function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff)
 
     if nargin < 4
