@@ -26,7 +26,7 @@ for i = 1:numTrainingFiles
     trainingFile = sprintf(trainingFiles, i);
   
     % Extract MFCC features for current speaker
-    mfcc_training = mfcc_selected(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_training = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
     
     % Compute VQ codebook for the current speaker using the LBG algorithm
     codebook = vq_lbg(mfcc_training', targetCodebookSize, epsilon, tol);
@@ -42,7 +42,7 @@ for i = 1:numTestFiles
     testFile = sprintf(testFiles, i);
     
     % Extract MFCC features for the test file
-    mfcc_test = mfcc_selected(testFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_test = mfcc(testFile, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_test = mfcc_test'; 
     
     % Compute average distortion for each speaker's codebook

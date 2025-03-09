@@ -1,5 +1,19 @@
-function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff)
+function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff, select_coef)
+    % Reads an audio file and computes its Mel-Frequency Cepstral Coefficients (MFCCs).
+    %
+    % Inputs:
+    %   file_name       - Path to the input audio file.
+    %   N               - Frame size (default: 512).
+    %   num_mel_filters - Number of Mel filters (default: 20).
+    %   mfcc_coeff      - Number of MFCC coefficients (default: 13).
+    %   select_coef     - Selector for frame filtering based on power (default: 1).
+    %
+    % Output:
+    %   mfcc_features   - Matrix of MFCC features for the selected frames.
 
+    if nargin < 5
+        select_coef = 1;
+    end
     if nargin < 4
         mfcc_coeff = 13;
     end
@@ -25,14 +39,32 @@ function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff)
     % Get mel filterbank
     mel_filters = melfb(num_mel_filters, N, Fs);
 
-    % Compute MFCC for each frame
+    stft_result = zeros(N, num_frames);
+
+    % Compute STFT
     for i = 1:num_frames
         frame_start = (i-1)*M + 1;
         frame = y(frame_start:frame_start+N-1) .* window;
-        
-        % Power spectrum
-        power_spectrum = abs(fft(frame)).^2;
-        power_spectrum = power_spectrum(1:N/2+1);
+        stft_result(:,i) = abs(fft(frame)).^2;
+    end
+
+    stft_result = stft_result(1:N/2+1, :);
+
+    % Compute the energy of each frame
+    energy_per_frame = sum(stft_result, 1);
+
+    % Compute the threshold
+    threshold = quantile(energy_per_frame, 1 - select_coef);
+
+    % Select frame indices where energy is above or equal to the threshold 
+    selected_frames_indices = find(energy_per_frame >= threshold);
+
+    % Extract the selected frames
+    selected_stft_result = stft_result(:, selected_frames_indices);
+
+    % Compute MFCC for each frame
+    for i = 1:length(selected_frames_indices)
+        power_spectrum = selected_stft_result(:, i);
         
         % Apply mel filterbank
         mel_energies = mel_filters * power_spectrum;

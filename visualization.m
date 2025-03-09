@@ -8,7 +8,7 @@ trainingFiles = './GivenSpeech_Data/Training_Data/s%d.wav';  % Files
 % MFCC parameters
 frameLength = 512;      % Frame length in samples
 numMelFilters = 20;     % Number of Mel filter banks
-numMfccCoeffs = 13;     % Total number of MFCC coefficients
+numMfccCoeffs = 20;     % Total number of MFCC coefficients
 
 % VQ-LBG parameters
 targetCodebookSize = 8; % The desired number of codewords in the final codebook
