@@ -19,21 +19,22 @@ Team members: Chenghao Xue, Guanyu Mi.
 
 #### mfcc
  - Input:
-    - file_name: 
-    - N :
-    - num_mel_filters:
-    - mfcc_coeff:
+    - inputData: Audio file or Signal
+    - N: Frame size (default: 512)
+    - num_mel_filters: Number of Mel filters (default: 20)
+    - mfcc_coeff: Number of MFCC coefficients (default: 13)
+    - select_coef: Selector for frame filtering based on power (default: 1)
  - Output:
-    - mfcc_features:
+    - mfcc_features: Matrix of MFCC features for the selected frames
 
 #### vq_lbg
  - Input:
     - mfcc    : MFCC matrix
-    - M       : The desired number of codewords in the final codebook
-    - epsilon : Splitting parameter (e.g., 0.01)
-    - tol     : Iteration stopping threshold (e.g., 1e-3)
+    - M       : The desired number of codewords in the final codebook (default: 8)
+    - epsilon : Splitting parameter (default: 0.01)
+    - tol     : Iteration stopping threshold (default: 1e-3)
  - Output:
-    - codebook: An Mxd matrix, each row is one final codeword
+    - codebook: An *M x d* matrix, each row is one final codeword
 
 ## Result
 
