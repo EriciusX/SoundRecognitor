@@ -9,8 +9,11 @@ function codebook = vq_lbg(mfcc, M, epsilon, tol)
 %             the relative improvement of the average distortion
 %
 % Output:
-%   codebook : An Mxd matrix, each row is one final codeword
+%   codebook : An M x d matrix, each row is one final codeword
 
+if nargin < 2
+    M = 8;
+end
 if nargin < 3
     epsilon = 0.01;
 end

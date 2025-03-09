@@ -95,6 +95,15 @@ hold on;
 plot(max_energy_time, max_energy_freq, 'r.', 'MarkerSize', 20);
 hold off;
 
+%% Test 3
+% Plot Mel-spaced filterbank
+fig4 = figure;
+set(fig4, 'Position', [100, screenHeight-1000, 600, 400]);
+mel_filter = melfb(20, N, Fs);
+plot(linspace(0, (Fs/2), N/2+1), melfb(20, 512, 12500)');
+title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
+
+%% Test 4
 % Compute MFCC features
 % Parameters for melfb
 num_mel_filters = 20;
@@ -136,14 +145,6 @@ colorbar;
 xlabel('Time (ms)');
 ylabel('MFCC Coefficient');
 title(sprintf('MFCC Features (Frame Size = %d)', N));
-
-%% Test 3
-% Plot Mel-spaced filterbank
-fig4 = figure;
-set(fig4, 'Position', [100, screenHeight-1000, 600, 400]);
-mel_filter = melfb(20, N, Fs);
-plot(linspace(0, (Fs/2), N/2+1), melfb(20, 512, 12500)');
-title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
 
 %% Test 5
 

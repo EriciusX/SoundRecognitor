@@ -1,15 +1,15 @@
-function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff, select_coef)
-    % Reads an audio file and computes its Mel-Frequency Cepstral Coefficients (MFCCs).
+function mfcc_features = mfcc(inputData, N, num_mel_filters, mfcc_coeff, select_coef)
+    % Reads an audio file or a Signal and computes its Mel-Frequency Cepstral Coefficients (MFCCs)
     %
     % Inputs:
-    %   file_name       - Path to the input audio file.
-    %   N               - Frame size (default: 512).
-    %   num_mel_filters - Number of Mel filters (default: 20).
-    %   mfcc_coeff      - Number of MFCC coefficients (default: 13).
-    %   select_coef     - Selector for frame filtering based on power (default: 1).
+    %   inputData       - Audio file or Signal
+    %   N               - Frame size (default: 512)
+    %   num_mel_filters - Number of Mel filters (default: 20)
+    %   mfcc_coeff      - Number of MFCC coefficients (default: 13)
+    %   select_coef     - Selector for frame filtering based on power (default: 1)
     %
     % Output:
-    %   mfcc_features   - Matrix of MFCC features for the selected frames.
+    %   mfcc_features   - Matrix of MFCC features for the selected frames
 
     if nargin < 5
         select_coef = 1;
@@ -24,7 +24,15 @@ function mfcc_features = mfcc(file_name, N, num_mel_filters, mfcc_coeff, select_
         N = 512;
     end
 
-    [y, Fs] = audioread(file_name);
+    if ischar(inputData) || isstring(inputData)
+        % If it's a file name, read from file
+        [y, Fs] = audioread(inputData);
+    else
+        % Otherwise, assume it's already a signal
+        y = inputData;
+        % You may need to define or pass in the sampling rate Fs
+        Fs = 22050;  % for example
+    end
 
     % Normalize
     y = y / max(abs(y)); 
