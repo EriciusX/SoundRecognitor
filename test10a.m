@@ -88,7 +88,7 @@ total_combined_zero = 0;
 for i = 1:numTestFiles
     testZeroFile = sprintf(zeroTestFiles, i);
     if exist(testZeroFile, 'file')
-        [y_zero, Fs_zero] = autoTrimSilence(testZeroFile, frameLength);
+        [y_zero, Fs_zero] = autoTrimSilence(testZeroFile, frameLength, 0.03);
         mfcc_test = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
@@ -101,7 +101,7 @@ for i = 1:numTestFiles
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
-        fprintf('Combined Test ("Zero") - True Speaker: %d, Predicted: %d\n', i, predicted);
+        fprintf('Test ("Zero") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
             correct_combined_zero = correct_combined_zero + 1;
         end
@@ -117,7 +117,7 @@ total_combined_twelve = 0;
 for i = 1:numTestFiles
     testTwelveFile = sprintf(twelveTestFiles, i);
     if exist(testTwelveFile, 'file')
-        [y_twelve, Fs_twelve] = autoTrimSilence(testTwelveFile, frameLength);
+        [y_twelve, Fs_twelve] = autoTrimSilence(testTwelveFile, frameLength, 0.03);
         mfcc_test = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
@@ -130,7 +130,7 @@ for i = 1:numTestFiles
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
-        fprintf('Combined Test ("Twelve") - True Speaker: %d, Predicted: %d\n', i, predicted);
+        fprintf('Test ("Twelve") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
             correct_combined_twelve = correct_combined_twelve + 1;
         end

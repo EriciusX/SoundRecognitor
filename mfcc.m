@@ -2,7 +2,8 @@ function mfcc_features = mfcc(y, Fs, N, num_mel_filters, mfcc_coeff, select_coef
     % Reads an audio file or a Signal and computes its Mel-Frequency Cepstral Coefficients (MFCCs)
     %
     % Inputs:
-    %   inputData       - Audio file or Signal
+    %   y               - Signal
+    %   Fs              - Sample Rate
     %   N               - Frame size (default: 512)
     %   num_mel_filters - Number of Mel filters (default: 20)
     %   mfcc_coeff      - Number of MFCC coefficients (default: 13)

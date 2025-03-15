@@ -2,10 +2,12 @@ clear; clc; close all;
 
 %% Parameters
 
-numTrainingFiles = 11;                                       % Number of training files
+numTrainingFiles = 11;
+numTestFiles     = 8;
 trainingFiles = './GivenSpeech_Data/Training_Data/s%d.wav';  % Files
 plotfile = 2;
 trim_threshold = 0.01;                                      % Threshold for trimming silence
+testFiles     = './GivenSpeech_Data/Test_Data/s%d.wav';
 
 % MFCC parameters
 frameLength = 512;      % Frame length in samples
@@ -279,72 +281,133 @@ title(sprintf('MFCC Features of Trimmed Signal (Frame Size = %d)', N));
 
 colors = lines(length(speakerList));
 
-% Plot MFCC Space
 fig5 = figure;
-set(fig5, 'Position', [700, screenHeight-1000, 600, 400]);
-hold on;
+screenSize = get(0, 'ScreenSize');
+screenHeight = screenSize(4);
+set(fig5, 'Position', [700, screenHeight-1000, 1200, 400]);
 
+subplot(1,2,1);
+hold on;
 for i = 1:length(speakerList)
     trainingFile = sprintf(trainingFiles, speakerList(i));
-
+    [y, Fs] = audioread(trainingFile);
+    
     % Extract MFCC features
-    mfcc_features = mfcc(trainingFile, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc(y, Fs, frameLength, numMelFilters, numMfccCoeffs);
     mfcc_features = mfcc_features';
-
+    
     scatter(mfcc_features(:, dim1), mfcc_features(:, dim2), 10, colors(i,:));
 end
-
-title('MFCC Space');
+title('Raw Audio MFCC Space');
 xlabel(sprintf('MFCC - %d', dim1));
 ylabel(sprintf('MFCC - %d', dim2));
 legend(arrayfun(@(x) sprintf('Speaker %d', x), speakerList, 'UniformOutput', false));
-grid()
+grid on;
+hold off;
+
+subplot(1,2,2);
+hold on;
+for i = 1:length(speakerList)
+    trainingFile = sprintf(trainingFiles, speakerList(i));
+    [y, Fs] = autoTrimSilence(trainingFile);
+    
+    % Extract MFCC features
+    mfcc_features = mfcc(y, Fs, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_features = mfcc_features';
+    
+    scatter(mfcc_features(:, dim1), mfcc_features(:, dim2), 10, colors(i,:));
+end
+title('Trimmed Audio MFCC Space');
+xlabel(sprintf('MFCC - %d', dim1));
+ylabel(sprintf('MFCC - %d', dim2));
+legend(arrayfun(@(x) sprintf('Speaker %d', x), speakerList, 'UniformOutput', false));
+grid on;
 hold off;
 
 %% Test 6
 
-allFeatures = [];
-allLabels = [];
+allFeatures_Raw = [];
+allLabels_Raw = [];
+featuresCell_Raw = cell(length(speakerList), 1);
 
-featuresCell = cell(length(speakerList),1);
-colors = lines(length(speakerList)+2);
+allFeatures_Trim = [];
+allLabels_Trim = [];
+featuresCell_Trim = cell(length(speakerList), 1);
 
+colors = lines(length(speakerList) + 2);
+
+% Loop over the speakers in speakerList (e.g., [2, 10])
 for i = 1:length(speakerList)
     speaker = speakerList(i);
     audioFile = sprintf(trainingFiles, speaker);
     
-    % Extract MFCC features
-    mfcc_features = mfcc(audioFile, frameLength, numMelFilters, numMfccCoeffs);
-    mfcc_features = mfcc_features';
+    % Method 1: Read raw audio using audioread
+    [y_raw, Fs] = audioread(audioFile);
+    % Extract MFCC features from raw audio
+    mfcc_raw = mfcc(y_raw, Fs, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_raw = mfcc_raw';
+    allFeatures_Raw = [allFeatures_Raw; mfcc_raw];
+    allLabels_Raw = [allLabels_Raw; repmat(speaker, size(mfcc_raw, 1), 1)];
+    featuresCell_Raw{i} = mfcc_raw;
     
-    % Append features to the combined matrix
-    allFeatures = [allFeatures; mfcc_features];
-    allLabels = [allLabels; repmat(speaker, size(mfcc_features, 1), 1)];
-    featuresCell{i} = mfcc_features;
+    % Method 2: Read trimmed audio using autoTrimSilence
+    [y_trim, Fs_trim] = autoTrimSilence(audioFile);
+    % Extract MFCC features from trimmed audio
+    mfcc_trim = mfcc(y_trim, Fs_trim, frameLength, numMelFilters, numMfccCoeffs);
+    mfcc_trim = mfcc_trim';
+    allFeatures_Trim = [allFeatures_Trim; mfcc_trim];
+    allLabels_Trim = [allLabels_Trim; repmat(speaker, size(mfcc_trim, 1), 1)];
+    featuresCell_Trim{i} = mfcc_trim;
 end
 
-features_spk2 = allFeatures(allLabels == 2, :);
-features_spk10 = allFeatures(allLabels == 10, :);
+% Separate features for Speaker 2 and Speaker 10 for raw method
+features_spk2_Raw = allFeatures_Raw(allLabels_Raw == 2, :);
+features_spk10_Raw = allFeatures_Raw(allLabels_Raw == 10, :);
 
-codeword2 = vq_lbg(features_spk2, targetCodebookSize, epsilon, tol);
-codeword10 = vq_lbg(features_spk10, targetCodebookSize, epsilon, tol);
+% Separate features for Speaker 2 and Speaker 10 for trimmed method
+features_spk2_Trim = allFeatures_Trim(allLabels_Trim == 2, :);
+features_spk10_Trim = allFeatures_Trim(allLabels_Trim == 10, :);
 
-% Plot MFCC Space with VQ codewords
-fig6 = figure;
-set(fig6, 'Position', [1300, screenHeight-1000, 600, 400]);
+% Compute VQ codebooks for raw audio features using LBG algorithm
+codeword2_Raw = vq_lbg(features_spk2_Raw, targetCodebookSize, epsilon, tol);
+codeword10_Raw = vq_lbg(features_spk10_Raw, targetCodebookSize, epsilon, tol);
+
+% Compute VQ codebooks for trimmed audio features using LBG algorithm
+codeword2_Trim = vq_lbg(features_spk2_Trim, targetCodebookSize, epsilon, tol);
+codeword10_Trim = vq_lbg(features_spk10_Trim, targetCodebookSize, epsilon, tol);
+
+% Create a figure with two horizontal subplots
+fig = figure;
+screenSize = get(0, 'ScreenSize');
+screenHeight = screenSize(4);
+set(fig, 'Position', [700, screenHeight-1200, 1200, 400]);
+
+subplot(1,2,1);
 hold on;
-
-scatter(featuresCell{1}(:, dim1), featuresCell{1}(:, dim2), 10, colors(1,:));
-scatter(featuresCell{2}(:, dim1), featuresCell{2}(:, dim2), 10, colors(2,:));
-
-% Overlay the VQ codewords with larger red filled markers
-scatter(codeword2(:, dim1), codeword2(:, dim2), 25, 'r', 'filled');
-scatter(codeword10(:, dim1), codeword10(:, dim2), 25, 'g', 'filled');
-
-title('MFCC Space with VQ Codebook');
+% Plot raw MFCC features for Speaker 2 and Speaker 10
+scatter(featuresCell_Raw{1}(:, dim1), featuresCell_Raw{1}(:, dim2), 10, colors(1,:));
+scatter(featuresCell_Raw{2}(:, dim1), featuresCell_Raw{2}(:, dim2), 10, colors(2,:));
+% Overlay VQ codebooks for raw audio
+scatter(codeword2_Raw(:, dim1), codeword2_Raw(:, dim2), 25, 'r', 'filled');
+scatter(codeword10_Raw(:, dim1), codeword10_Raw(:, dim2), 25, 'g', 'filled');
+title('Raw Audio MFCC Space with VQ Codebook');
 xlabel(sprintf('MFCC - %d', dim1));
 ylabel(sprintf('MFCC - %d', dim2));
-legend([arrayfun(@(x) sprintf('Speaker %d', x), speakerList, 'UniformOutput', false),...
-        arrayfun(@(x) sprintf('Speaker %d with VQ codebook', x), speakerList, 'UniformOutput', false)]);
-grid()
+legend({'Speaker 2', 'Speaker 10', 'Speaker 2 VQ', 'Speaker 10 VQ'}, 'Location', 'best');
+grid on;
+hold off;
+
+subplot(1,2,2);
+hold on;
+% Plot trimmed MFCC features for Speaker 2 and Speaker 10
+scatter(featuresCell_Trim{1}(:, dim1), featuresCell_Trim{1}(:, dim2), 10, colors(1,:));
+scatter(featuresCell_Trim{2}(:, dim1), featuresCell_Trim{2}(:, dim2), 10, colors(2,:));
+% Overlay VQ codebooks for trimmed audio
+scatter(codeword2_Trim(:, dim1), codeword2_Trim(:, dim2), 25, 'r', 'filled');
+scatter(codeword10_Trim(:, dim1), codeword10_Trim(:, dim2), 25, 'g', 'filled');
+title('Trimmed Audio MFCC Space with VQ Codebook');
+xlabel(sprintf('MFCC - %d', dim1));
+ylabel(sprintf('MFCC - %d', dim2));
+legend({'Speaker 2', 'Speaker 10', 'Speaker 2 VQ', 'Speaker 10 VQ'}, 'Location', 'best');
+grid on;
 hold off;
