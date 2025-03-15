@@ -4,6 +4,8 @@ clear; clc; close all;
 
 numTrainingFiles = 11;                                       % Number of training files
 trainingFiles = './GivenSpeech_Data/Training_Data/s%d.wav';  % Files
+plotfile = 2;
+trim_threshold = 0.01;                                      % Threshold for trimming silence
 
 % MFCC parameters
 frameLength = 512;      % Frame length in samples
@@ -26,9 +28,9 @@ screenSize = get(0, 'ScreenSize');
 screenWidth = screenSize(3);
 screenHeight = screenSize(4);
 
-%% Test 2
+%% Test 2.1
 % Load and plot speech signal in time domain
-[y, Fs] = audioread(sprintf(trainingFiles, 1));
+[y, Fs] = audioread(sprintf(trainingFiles, plotfile));
 sound(y, Fs);
 
 % Normalize
@@ -39,99 +41,196 @@ time_ms = (256 / Fs) * 1000;
 fprintf('Sampling rate: %d Hz\n', Fs);
 fprintf('Duration of 256 samples: %.2f milliseconds\n', time_ms);
 
-% Plot signal in time domain
+% Plot signal in time domain before trimming
 t = (0:length(y)-1) / Fs;  
 fig1 = figure;
 set(fig1, 'Position', [100, screenHeight-500, 600, 400]);
+subplot(2,1,1);
 plot(t, y);
 xlim([0 max(t)]);
 xlabel('Time (s)');
 ylabel('Amplitude');
-title('Signal for s1.wav in Time Domain');
+title('Signal before Trimming in Time Domain');
 
-% Plot spectrogram of speech signal
-N = 512;  % Frame size
-M = round(N/3); % frame increment
+% Load the speech after auto trim silence from the beginning and end of the signal
+[y_trim, Fs] = autoTrimSilence(sprintf(trainingFiles, plotfile), frameLength, trim_threshold);
+sound(y_trim, Fs);
 
-num_frames = floor((length(y) - N) / M) + 1;
-stft_result = zeros(N, num_frames);
-window = hamming(N);
+% Plot signal in time domain after trimming
+t_trim = (0:length(y_trim)-1) / Fs;
+subplot(2,1,2);
+plot(t_trim, y_trim);
+xlim([0 max(t_trim)]);
+xlabel('Time (s)');
+ylabel('Amplitude');
+title('Signal after Trimming in Time Domain');
 
-% Compute STFT
-for i = 1:num_frames
-    frame_start = (i-1)*M + 1;
-    frame = y(frame_start:frame_start+N-1) .* window;
-    stft_result(:,i) = abs(fft(frame)).^2;
-end
+%% Test 2.2
 
-stft_result = stft_result(1:N/2+1, :);
-stft_result_db = 10*log10(stft_result);
+% Plot spectrogram of speech signal for different frame sizes
+frame_sizes = [128, 256, 512];
 
-% Create time and frequency vectors for plotting
-t = ((0:num_frames-1) * M) / Fs * 1000;  % Time in milliseconds
-f = (0:N/2) * Fs / N;  % Frequency in Hz
-
-% Plot spectrogram
 fig2 = figure;
 set(fig2, 'Position', [700, screenHeight-500, 600, 400]);
+
+for k = 1:length(frame_sizes)
+    N = frame_sizes(k);
+    M = round(N / 3); % frame increment
+    
+    num_frames = floor((length(y) - N) / M) + 1;
+    stft_result = zeros(N, num_frames);
+    window = hamming(N);
+
+    % Compute STFT
+    for i = 1:num_frames
+        frame_start = (i-1)*M + 1;
+        frame = y(frame_start:frame_start+N-1) .* window;
+        stft_result(:,i) = abs(fft(frame)).^2;
+    end
+
+    stft_result = stft_result(1:N/2+1, :);
+    stft_result_db = 10*log10(stft_result);
+
+    % Create time and frequency vectors for plotting
+    t = ((0:num_frames-1) * M) / Fs * 1000;  % Time in milliseconds
+    f = (0:N/2) * Fs / N;  % Frequency in Hz
+
+    % Plot spectrogram before trimming
+    subplot(4, 1, k);
+    imagesc(t, f, stft_result_db);
+    axis xy;  % Put low frequencies at bottom
+    colorbar;
+    xlabel('Time (ms)');
+    ylabel('Frequency (Hz)');
+    title(sprintf('STFT Spectrogram (Frame Size = %d, Frame Increment = %d)', N, M));
+
+    % Find region with most energy
+    [max_energy_val, max_idx] = max(stft_result_db(:));
+    [freq_idx, time_idx] = ind2sub(size(stft_result_db), max_idx);
+    max_energy_time = t(time_idx);
+    max_energy_freq = f(freq_idx);
+
+    fprintf('Frame size N=%d: Maximum energy at %.2f ms and %.2f Hz\n', ...
+            N, max_energy_time, max_energy_freq);
+
+    % Optional: Mark the maximum energy point
+    hold on;
+    plot(max_energy_time, max_energy_freq, 'r.', 'MarkerSize', 20);
+    hold off;
+end
+
+% Plot spectrogram of trimmed speech signal
+num_frames_trim = floor((length(y_trim) - N) / M) + 1;
+stft_result_trim = zeros(N, num_frames_trim);
+
+% Compute STFT for trimmed signal
+for i = 1:num_frames_trim
+    frame_start = (i-1)*M + 1;
+    frame = y_trim(frame_start:frame_start+N-1) .* window;
+    stft_result_trim(:,i) = abs(fft(frame)).^2;
+end
+
+stft_result_trim = stft_result_trim(1:N/2+1, :);
+stft_result_trim_db = 10*log10(stft_result_trim);
+
+% Create time and frequency vectors for plotting
+t_trim = ((0:num_frames_trim-1) * M) / Fs * 1000;  % Time in milliseconds
+f_trim = (0:N/2) * Fs / N;  % Frequency in Hz
+
+% Plot spectrogram of trimmed signal
+subplot(4,1,4);
+imagesc(t_trim, f_trim, stft_result_trim_db);
+axis xy;  % Put low frequencies at bottom
+colorbar;
+xlabel('Time (ms)');
+ylabel('Frequency (Hz)');
+title(sprintf('STFT Spectrogram of Trimmed Signal (Frame Size = %d, Frame Increment = %d)', N, M));
+
+%% Test 3.1
+% Plot Mel-spaced filterbank
+numFilters = 20;
+
+fig4 = figure;
+subplot(2,1,1);
+set(fig4, 'Position', [100, screenHeight-1000, 600, 400]);
+mel_filters = melfb(numFilters, N, Fs);
+plot(linspace(0, (Fs/2), N/2+1), mel_filters);
+title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+
+% Plot theoretical Mel filterbank response
+subplot(2,1,2);
+hold on;
+
+% Convert frequency to Mel scale
+f_min = 0;
+f_max = Fs / 2;
+mel_min = 2595 * log10(1 + f_min / 700);
+mel_max = 2595 * log10(1 + f_max / 700);
+
+% Generate center frequencies on the Mel scale
+mel_points = linspace(mel_min, mel_max, numFilters + 2);
+f_points = 700 * (10.^(mel_points / 2595) - 1);
+bins = floor((N + 1) * f_points / Fs);
+
+% Plot theoretical triangular filters
+for i = 2:numFilters + 1
+    x1 = f_points(i - 1);
+    x2 = f_points(i);
+    x3 = f_points(i + 1);
+    y = [0, 1, 0];
+    
+    plot([x1, x2, x3], y);
+end
+title('Theoretical Mel-spaced filter bank (Triangle Shape)');
+xlabel('Frequency (Hz)');
+ylabel('Amplitude');
+hold off;
+
+%% Test 3.2
+% Plot spectrogram before wrapping
+figure;
+subplot(2,1,1);
 imagesc(t, f, stft_result_db);
 axis xy;  % Put low frequencies at bottom
 colorbar;
 xlabel('Time (ms)');
 ylabel('Frequency (Hz)');
-title(sprintf('STFT Spectrogram (Frame Size = %d, Frame Increment = %d)', N, M));
+title('Spectrogram before the mel frequency wrapping');
 
-% Find region with most energy
-[max_energy_val, max_idx] = max(stft_result_db(:));
-[freq_idx, time_idx] = ind2sub(size(stft_result_db), max_idx);
-max_energy_time = t(time_idx);
-max_energy_freq = f(freq_idx);
+mel_wrap = zeros(numFilters, num_frames);
 
-fprintf('Frame size N=%d: Maximum energy at %.2f ms and %.2f Hz\n', ...
-        N, max_energy_time, max_energy_freq);
+for i = 1:num_frames
+    power_spectrum = stft_result(:, i);
+    mel_wrap(:, i) = mel_filters * power_spectrum;
+end
 
-% Optional: Mark the maximum energy point
-hold on;
-plot(max_energy_time, max_energy_freq, 'r.', 'MarkerSize', 20);
-hold off;
-
-%% Test 3
-% Plot Mel-spaced filterbank
-fig4 = figure;
-set(fig4, 'Position', [100, screenHeight-1000, 600, 400]);
-mel_filter = melfb(20, N, Fs);
-plot(linspace(0, (Fs/2), N/2+1), melfb(20, 512, 12500)');
-title('Mel-spaced filterbank'), xlabel('Frequency (Hz)');
+% Plot power spectrum after Mel frequency wrapping
+subplot(2,1,2);
+imagesc(t, f, 10*log10(mel_wrap));
+axis xy;  % Put low frequencies at bottom
+colorbar;
+xlabel('Time (ms)');
+ylabel('Frequency (Hz)');
+title('Spectrogram after the mel frequency wrapping');
 
 %% Test 4
 % Compute MFCC features
-% Parameters for melfb
-num_mel_filters = 20;
 mfcc_coeff = 20;
 
 % Initialize MFCC matrix
 mfcc_features = zeros(mfcc_coeff-1, num_frames);
 
-% Get mel filterbank
-mel_filters = melfb(num_mel_filters, N, Fs);
-
 % Compute MFCC for each frame
 for i = 1:num_frames
-    frame_start = (i-1)*M + 1;
-    frame = y(frame_start:frame_start+N-1) .* window;
-    
-    % Power spectrum
-    power_spectrum = abs(fft(frame)).^2;
-    power_spectrum = power_spectrum(1:N/2+1);
-    
     % Apply mel filterbank
-    mel_energies = mel_filters * power_spectrum;
+    mel_energies = mel_wrap(:, i);
     
     % Apply DCT to get MFCC
-    mfcc_frames = dct(log(mel_energies(1:mfcc_coeff)));
+    mfcc_frames = dct(log(mel_energies));
     
     % Keep only the specified number of coefficients
-    mfcc_features(:, i) = mfcc_frames(2:end);
+    mfcc_features(:, i) = mfcc_frames(2:mfcc_coeff);
 end
 
 % Create time vector for plotting
@@ -140,11 +239,41 @@ t = ((0:num_frames-1) * M) / Fs * 1000;  % Time in milliseconds
 % Plot MFCC features
 fig3 = figure;
 set(fig3, 'Position', [1300, screenHeight-500, 600, 400]);
+subplot(2,1,1);
 imagesc(t, 2:mfcc_coeff, mfcc_features);
 colorbar;
 xlabel('Time (ms)');
 ylabel('MFCC Coefficient');
 title(sprintf('MFCC Features (Frame Size = %d)', N));
+
+% Compute MFCC features for trimmed signal
+mfcc_features_trim = zeros(mfcc_coeff-1, num_frames_trim);
+
+% Compute MFCC for each frame of trimmed signal
+for i = 1:num_frames_trim
+    % Power spectrum
+    power_spectrum = stft_result_trim(:, i);
+    
+    % Apply mel filterbank
+    mel_energies = mel_filters * power_spectrum;
+    
+    % Apply DCT to get MFCC
+    mfcc_frames = dct(log(mel_energies));
+    
+    % Keep only the specified number of coefficients
+    mfcc_features_trim(:, i) = mfcc_frames(2:mfcc_coeff);
+end
+
+% Create time vector for plotting
+t_trim = ((0:num_frames_trim-1) * M) / Fs * 1000;  % Time in milliseconds
+
+% Plot MFCC features for trimmed signal
+subplot(2,1,2);
+imagesc(t_trim, 2:mfcc_coeff, mfcc_features_trim);
+colorbar;
+xlabel('Time (ms)');
+ylabel('MFCC Coefficient');
+title(sprintf('MFCC Features of Trimmed Signal (Frame Size = %d)', N));
 
 %% Test 5
 
