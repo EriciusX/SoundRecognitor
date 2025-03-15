@@ -1,4 +1,4 @@
-function mfcc_features = mfcc(inputData, N, num_mel_filters, mfcc_coeff, select_coef)
+function mfcc_features = mfcc(y, Fs, N, num_mel_filters, mfcc_coeff, select_coef)
     % Reads an audio file or a Signal and computes its Mel-Frequency Cepstral Coefficients (MFCCs)
     %
     % Inputs:
@@ -11,27 +11,17 @@ function mfcc_features = mfcc(inputData, N, num_mel_filters, mfcc_coeff, select_
     % Output:
     %   mfcc_features   - Matrix of MFCC features for the selected frames
 
-    if nargin < 5
+    if nargin < 6
         select_coef = 1;
     end
-    if nargin < 4
+    if nargin < 5
         mfcc_coeff = 13;
     end
-    if nargin < 3
+    if nargin < 4
         num_mel_filters = 20;
     end
-    if nargin < 2
+    if nargin < 3
         N = 512;
-    end
-
-    if ischar(inputData) || isstring(inputData)
-        % If it's a file name, read from file
-        [y, Fs] = audioread(inputData);
-    else
-        % Otherwise, assume it's already a signal
-        y = inputData;
-        % You may need to define or pass in the sampling rate Fs
-        Fs = 22050;  % for example
     end
 
     % Normalize
