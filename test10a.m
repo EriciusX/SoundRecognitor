@@ -29,9 +29,9 @@ f0 = 1500;  % Center frequency in Hz
 Q  = 30;    % Quality factor
 R  = 1;     % Pole radius
 
-%% 2. Original Experiment: Recognition using "Zero" Utterances
+%% 2. Original Experiment: Recognition using "Zero" and "Twelve" Utterances
 
-% Build VQ codebooks for each training speaker (using "zero" samples)
+% Build VQ codebooks for each training speaker
 trainCodebooks_zero = cell(numTrainingFiles, 1);
 trainCodebooks_twelve = cell(numTrainingFiles, 1);
 
@@ -39,7 +39,8 @@ for i = 1:numTrainingFiles
     % Train codebook using "zero" samples
     zeroTrainFile = sprintf(zeroTrainingFiles, i);
     if exist(zeroTrainFile, 'file')
-        mfcc_zero = mfcc(autoTrimSilence(zeroTrainFile), frameLength, numMelFilters, numMfccCoeffs);
+        [y_zero, Fs_zero] = autoTrimSilence(zeroTrainFile, frameLength);
+        mfcc_zero = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         codebook_zero = vq_lbg(mfcc_zero', targetCodebookSize, epsilon, tol);
         trainCodebooks_zero{i} = codebook_zero;
     end
@@ -47,7 +48,8 @@ for i = 1:numTrainingFiles
     % Train codebook using "twelve" samples
     twelveTrainFile = sprintf(twelveTrainingFiles, i);
     if exist(twelveTrainFile, 'file')
-        mfcc_twelve = mfcc(autoTrimSilence(twelveTrainFile), frameLength, numMelFilters, numMfccCoeffs);
+        [y_twelve, Fs_twelve] = autoTrimSilence(twelveTrainFile, frameLength);
+        mfcc_twelve = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         codebook_twelve = vq_lbg(mfcc_twelve', targetCodebookSize, epsilon, tol);
         trainCodebooks_twelve{i} = codebook_twelve;
     end
@@ -63,7 +65,8 @@ for i = 1:numTrainingFiles
     % Process "zero" training sample
     zeroTrainFile = sprintf(zeroTrainingFiles, i);
     if exist(zeroTrainFile, 'file')
-        mfcc_zero = mfcc(autoTrimSilence(zeroTrainFile), frameLength, numMelFilters, numMfccCoeffs);
+        [y_zero, Fs_zero] = autoTrimSilence(zeroTrainFile, frameLength);
+        mfcc_zero = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         codebook_zero = vq_lbg(mfcc_zero', targetCodebookSize, epsilon, tol);
         combinedTrainCodebooks{i}.zero = codebook_zero;
     end
@@ -71,7 +74,8 @@ for i = 1:numTrainingFiles
     % Process "twelve" training sample
     twelveTrainFile = sprintf(twelveTrainingFiles, i);
     if exist(twelveTrainFile, 'file')
-        mfcc_twelve = mfcc(autoTrimSilence(twelveTrainFile), frameLength, numMelFilters, numMfccCoeffs);
+        [y_twelve, Fs_twelve] = autoTrimSilence(twelveTrainFile, frameLength);
+        mfcc_twelve = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         codebook_twelve = vq_lbg(mfcc_twelve', targetCodebookSize, epsilon, tol);
         combinedTrainCodebooks{i}.twelve = codebook_twelve;
     end
@@ -84,7 +88,8 @@ total_combined_zero = 0;
 for i = 1:numTestFiles
     testZeroFile = sprintf(zeroTestFiles, i);
     if exist(testZeroFile, 'file')
-        mfcc_test = mfcc(autoTrimSilence(testZeroFile), frameLength, numMelFilters, numMfccCoeffs, select_coef);
+        [y_zero, Fs_zero] = autoTrimSilence(testZeroFile, frameLength);
+        mfcc_test = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
@@ -112,7 +117,8 @@ total_combined_twelve = 0;
 for i = 1:numTestFiles
     testTwelveFile = sprintf(twelveTestFiles, i);
     if exist(testTwelveFile, 'file')
-        mfcc_test = mfcc(autoTrimSilence(testTwelveFile), frameLength, numMelFilters, numMfccCoeffs, select_coef);
+        [y_twelve, Fs_twelve] = autoTrimSilence(testTwelveFile, frameLength);
+        mfcc_test = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
@@ -144,7 +150,8 @@ correctBoth = 0;
 for i = 1:numTestFiles
     testFile = sprintf(zeroTestFiles, i);
     if exist(testFile, 'file')
-        mfcc_test = mfcc(autoTrimSilence(testFile), frameLength, numMelFilters, numMfccCoeffs, select_coef);
+        [y_zero, Fs_zero] = autoTrimSilence(testFile, frameLength, 0.03);
+        mfcc_test = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         
         bestDistortion = Inf;
@@ -206,7 +213,8 @@ end
 for i = 1:numTestFiles
     testFile = sprintf(twelveTestFiles, i);
     if exist(testFile, 'file')
-        mfcc_test = mfcc(autoTrimSilence(testFile), frameLength, numMelFilters, numMfccCoeffs, select_coef);
+        [y_twelve, Fs_twelve] = autoTrimSilence(testFile, frameLength, 0.03);
+        mfcc_test = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         
         bestDistortion = Inf;
@@ -266,72 +274,3 @@ jointAccuracy = correctBoth / totalTests;
 fprintf('Combined System - Speaker Accuracy: %.2f%%\n', speakerAccuracy * 100);
 fprintf('Combined System - Word Accuracy: %.2f%%\n', wordAccuracy * 100);
 fprintf('Combined System - Joint (Speaker & Word) Accuracy: %.2f%%\n', jointAccuracy * 100);
-
-
-%% Function of autoTrimSilence
-function [trimmedSignal, Fs] = autoTrimSilence(audioFile, frameSize, overlapRatio, percentage)
-% AUTOTRIMSILENCE Automatically trims silence at the beginning and end of an audio file.
-%
-% Inputs:
-%   audioFile   : Path to the input audio file (string).
-%   frameSize   : Number of samples in each frame (e.g., 512).
-%   overlapRatio: Overlap ratio for consecutive frames (e.g., 0.66 means 66% overlap).
-%                 Default is 2/3 if not specified.
-%
-% Output:
-%   trimmedSignal: Audio signal after removing silent parts from the beginning and the end.
-
-    if nargin < 2
-        frameSize = 512;
-    end
-    if nargin < 3
-        overlapRatio = 2/3; 
-    end
-    if nargin < 4
-        percentage = 0.03; 
-    end
-
-    % Read the audio file
-    [y, Fs] = audioread(audioFile);
-    % Normalize the waveform to avoid amplitude issues
-    y = y / (max(abs(y)) + eps);
-
-    % Define frame increment based on overlap ratio
-    increment = round(frameSize * (1 - overlapRatio));
-
-    % Compute the number of frames
-    numFrames = floor((length(y) - frameSize) / increment) + 1;
-
-    % Pre-allocate array for short-time energy
-    energy = zeros(numFrames, 1);
-
-    % Calculate short-time energy for each frame
-    for i = 1:numFrames
-        startIndex = (i - 1) * increment + 1;
-        frame = y(startIndex : startIndex + frameSize - 1);
-        energy(i) = sum(frame .^ 2);
-    end
-
-    % Set a threshold, e.g., 1% of the maximum energy
-    threshold = percentage * max(energy);
-
-    % Find frames that exceed the threshold
-    voicedFrames = find(energy >= threshold);
-
-    % If no frames exceed the threshold, the signal might be entirely silent
-    if isempty(voicedFrames)
-        trimmedSignal = [];
-        return;
-    end
-
-    % Identify the first and last frames that exceed the threshold
-    firstFrame = min(voicedFrames);
-    lastFrame  = max(voicedFrames);
-
-    % Convert frame indices to sample indices
-    startSample = (firstFrame - 1) * increment + 1;
-    endSample   = (lastFrame - 1) * increment + frameSize;
-
-    % Trim the signal
-    trimmedSignal = y(startSample : endSample);
-end
