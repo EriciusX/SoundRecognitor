@@ -163,6 +163,7 @@ Dataset: **2024StudentAudioRecording**
     ![Test10a_0](./results/Test10a_0.png)
     ![Test10a_12](./results/Test10a_12.png)
 
+    ---
 2. Question 2: If we use train a whole system that tries to identify a) which speaker, and b) whether the speed is "zero" or "twelve", how accurate is your system?
 
     Method: We trained a combined VQ codebook, which includes the codebooks for "zero" and "twelve." For the input test set, we compute the distance to each codebook, and the one with the shorter distance corresponds to the respective speech type.
@@ -183,6 +184,7 @@ Dataset: **EEC201AudioRecordings**
     ![Test10b_5](./results/Test10b_5.png)
     ![Test10b_11](./results/Test10b_11.png)
 
+    ---
 2. Question 4: How well do they compare against test in 10a using zero/twelve?
 
     Result: Compared to Question 2 in 10a, its speaker recognition accuracy has decreased. The reason also appears in Question 3, where speaker 18's pronunciation of "five" is misclassified as speaker 13.
