@@ -145,7 +145,7 @@ The parameters of  IIR notch filter are:
 - Quality factor ($Q$) = 30
 - Pole radius ($R$): 1
 
-![Test8](./results/test8.png)
+![Test8](./results/Test8.png)
 
 ---
 
