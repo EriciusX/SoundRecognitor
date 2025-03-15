@@ -179,7 +179,7 @@ Dataset: **EEC201AudioRecordings**
 
 1. Question 3: If we use "eleven" to identify speakers, what is the accuracy versus the system that uses "five"? 
 
-    Result: "five" has a lower accuracy (91.30%), "eleven" has an accuracy of 100%.
+    Result: "five" has a lower accuracy (91.30%), "eleven" has an accuracy of 100%. After manual identification, the timbres of speaker 18 and speaker 13 are very similar, and we believe this is the reason for the prediction error.
 
     ![Test10b_5](./results/Test10b_5.png)
     ![Test10b_11](./results/Test10b_11.png)
@@ -187,6 +187,6 @@ Dataset: **EEC201AudioRecordings**
     ---
 2. Question 4: How well do they compare against test in 10a using zero/twelve?
 
-    Result: Compared to Question 2 in 10a, its speaker recognition accuracy has decreased. The reason also appears in Question 3, where speaker 18's pronunciation of "five" is misclassified as speaker 13.
+    Result: Compared to Question 2 in 10a, its speaker recognition accuracy has decreased. The reason also appears in Question 3, where speaker 18's pronunciation of "five" is mispredicted as speaker 13. 
 
     ![Test10b_combine](./results/Test10b_combine.png)
