@@ -47,6 +47,6 @@ pm = pf - fp;
 % Create the sparse filterbank matrix
 r = [fp(b2:b4) 1+fp(1:b3)];
 c = [b2:b4 1:b3] + 1;
-v = 2 * [1-pm(b2:b4) pm(1:b3)];
+v = [1-pm(b2:b4) pm(1:b3)];
 
 m = sparse(r, c, v, p, 1+fn2);
