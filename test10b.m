@@ -88,7 +88,7 @@ total_combined_eleven = 0;
 for i = 1:numTestFiles
     testElevenFile = sprintf(elevenTestFiles, i);
     if exist(testElevenFile, 'file')
-        [y_eleven, Fs_eleven] = autoTrimSilence(testElevenFile);
+        [y_eleven, Fs_eleven] = autoTrimSilence(testElevenFile, frameLength, 0.03);
         mfcc_test = mfcc(y_eleven, Fs_eleven, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
@@ -101,7 +101,7 @@ for i = 1:numTestFiles
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
-        fprintf('Combined Test ("Eleven") - True Speaker: %d, Predicted: %d\n', i, predicted);
+        fprintf('Test ("Eleven") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
             correct_combined_eleven = correct_combined_eleven + 1;
         end
@@ -117,7 +117,7 @@ total_combined_five = 0;
 for i = 1:numTestFiles
     testFiveFile = sprintf(fiveTestFiles, i);
     if exist(testFiveFile, 'file')
-        [y_five, Fs_five] = autoTrimSilence(testFiveFile);
+        [y_five, Fs_five] = autoTrimSilence(testFiveFile, frameLength, 0.03);
         mfcc_test = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         distortions = inf(numTrainingFiles, 1);
@@ -130,7 +130,7 @@ for i = 1:numTestFiles
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
-        fprintf('Combined Test ("Five") - True Speaker: %d, Predicted: %d\n', i, predicted);
+        fprintf('Test ("Five") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
             correct_combined_five = correct_combined_five + 1;
         end
@@ -150,7 +150,7 @@ correctBoth = 0;
 for i = 1:numTestFiles
     testFile = sprintf(elevenTestFiles, i);
     if exist(testFile, 'file')
-        [y_eleven, Fs_Test] = autoTrimSilence(testFile);
+        [y_eleven, Fs_Test] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_eleven, Fs_Test, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         
@@ -213,7 +213,7 @@ end
 for i = 1:numTestFiles
     testFile = sprintf(fiveTestFiles, i);
     if exist(testFile, 'file')
-        [y_five, Fs_five] = autoTrimSilence(testFile);
+        [y_five, Fs_five] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs, select_coef);
         mfcc_test = mfcc_test';  % Each row is a feature vector
         

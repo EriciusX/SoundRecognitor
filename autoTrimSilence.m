@@ -4,9 +4,9 @@ function [trimmedSignal, Fs] = autoTrimSilence(audioFile, frameSize, thresholdFa
 % Inputs:
 %   audioFile       : Path to the input audio file (string)
 %   frameSize       : Number of samples in each frame (e.g., 512)
-%   overlapRatio    : Overlap ratio for consecutive frames (e.g., 0.66 means 66% overlap)
 %   thresholdFactor : The fraction of the maximum energy used as a threshold 
 %                     (e.g., 0.01 means 1% of max energy)
+%   overlapRatio    : Overlap ratio for consecutive frames (e.g., 0.66 means 66% overlap)
 %
 % Output:
 %   trimmedSignal: Audio signal after removing silent parts from the beginning and the end
