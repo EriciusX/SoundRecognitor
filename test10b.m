@@ -24,11 +24,6 @@ targetCodebookSize = 16;  % Desired number of codewords in the final codebook
 epsilon = 0.01;           % Splitting parameter
 tol = 1e-3;               % Iteration stopping threshold
 
-% Notch filter parameters (for later experiments)
-f0 = 1500;  % Center frequency in Hz
-Q  = 30;    % Quality factor
-R  = 1;     % Pole radius
-
 %% 2. Original Experiment: Recognition using "Eleven" and "Five" Utterances
 
 % Build VQ codebooks for each training speaker
@@ -49,9 +44,9 @@ for i = 1:numTrainingFiles
     fiveTrainFile = sprintf(fiveTrainingFiles, i);
     if exist(fiveTrainFile, 'file')
         [y_five, Fs_five] = autoTrimSilence(fiveTrainFile, frameLength);
-        mfcc_twelve = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs);
-        codebook_twelve = vq_lbg(mfcc_twelve', targetCodebookSize, epsilon, tol);
-        trainCodebooks_five{i} = codebook_twelve;
+        mfcc_five = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs);
+        codebook_five = vq_lbg(mfcc_five', targetCodebookSize, epsilon, tol);
+        trainCodebooks_five{i} = codebook_five;
     end
 end
 
@@ -83,62 +78,62 @@ end
 
 %% Question 1
 % Test with "Eleven" Test Samples
-correct_combined_eleven = 0;
-total_combined_eleven = 0;
+correct_eleven = 0;
+total_eleven = 0;
 for i = 1:numTestFiles
     testElevenFile = sprintf(elevenTestFiles, i);
     if exist(testElevenFile, 'file')
         [y_eleven, Fs_eleven] = autoTrimSilence(testElevenFile, frameLength, 0.03);
         mfcc_test = mfcc(y_eleven, Fs_eleven, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
+
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
             if isempty(trainCodebooks_eleven{spk})
                 continue;
             end
-            cb_combined = trainCodebooks_eleven{spk};
-            dists = pdist2(mfcc_test, cb_combined, 'euclidean').^2;
+            cb_eleven = trainCodebooks_eleven{spk};
+            dists = disteu(mfcc_test, cb_eleven').^2;
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
         fprintf('Test ("Eleven") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
-            correct_combined_eleven = correct_combined_eleven + 1;
+            correct_eleven = correct_eleven + 1;
         end
-        total_combined_eleven = total_combined_eleven + 1;
+        total_eleven = total_eleven + 1;
     end
 end
-accuracy_combined_eleven = correct_combined_eleven / total_combined_eleven;
-fprintf('"Eleven" Test Accuracy: %.2f%%\n\n', accuracy_combined_eleven * 100);
+accuracy_eleven = correct_eleven / total_eleven;
+fprintf('"Eleven" Test Accuracy: %.2f%%\n\n', accuracy_eleven * 100);
 
 % Test with "Five" Test Samples
-correct_combined_five = 0;
-total_combined_five = 0;
+correct_five = 0;
+total_five = 0;
 for i = 1:numTestFiles
     testFiveFile = sprintf(fiveTestFiles, i);
     if exist(testFiveFile, 'file')
         [y_five, Fs_five] = autoTrimSilence(testFiveFile, frameLength, 0.03);
         mfcc_test = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
+
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
             if isempty(trainCodebooks_five{spk})
                 continue;
             end
-            cb_combined = trainCodebooks_five{spk};
-            dists = pdist2(mfcc_test, cb_combined, 'euclidean').^2;
+            cb_five = trainCodebooks_five{spk};
+            dists = disteu(mfcc_test, cb_five').^2;
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
         fprintf('Test ("Five") - True Speaker: %d, Predicted: %d\n', i, predicted);
         if predicted == i
-            correct_combined_five = correct_combined_five + 1;
+            correct_five = correct_five + 1;
         end
-        total_combined_five = total_combined_five + 1;
+        total_five = total_five + 1;
     end
 end
-accuracy_combined_five = correct_combined_five / total_combined_five;
-fprintf('"Five" Test Accuracy: %.2f%%\n', accuracy_combined_five * 100);
+accuracy_five = correct_five / total_five;
+fprintf('"Five" Test Accuracy: %.2f%%\n\n', accuracy_five * 100);
 
 %% Question 2
 totalTests = 0;
@@ -152,26 +147,24 @@ for i = 1:numTestFiles
     if exist(testFile, 'file')
         [y_eleven, Fs_Test] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_eleven, Fs_Test, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
         
         bestDistortion = Inf;
         predictedSpeaker = NaN;
         predictedWord = '';
-        
-        % For each speaker, compute distortions for both "eleven" and "five" codebooks.
+
         for spk = 1:numTrainingFiles
             if isempty(combinedTrainCodebooks{spk}.eleven) || isempty(combinedTrainCodebooks{spk}.five)
                 continue;
             end
             
             % Distortion for "eleven" codebook
-            cb_zero = combinedTrainCodebooks{spk}.eleven;
-            dists_eleven = pdist2(mfcc_test, cb_zero, 'euclidean').^2;
+            cb_eleven = combinedTrainCodebooks{spk}.eleven;
+            dists_eleven = disteu(mfcc_test, cb_eleven').^2;
             distortion_eleven = mean(min(dists_eleven, [], 2));
             
             % Distortion for "five" codebook
-            cb_twelve = combinedTrainCodebooks{spk}.five;
-            dists_five = pdist2(mfcc_test, cb_twelve, 'euclidean').^2;
+            cb_five = combinedTrainCodebooks{spk}.five;
+            dists_five = disteu(mfcc_test, cb_five').^2;
             distortion_five = mean(min(dists_five, [], 2));
             
             % Choose the lower distortion between "eleven" and "five" for speaker spk
@@ -215,8 +208,7 @@ for i = 1:numTestFiles
     if exist(testFile, 'file')
         [y_five, Fs_five] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_five, Fs_five, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
-        
+
         bestDistortion = Inf;
         predictedSpeaker = NaN;
         predictedWord = '';
@@ -227,11 +219,11 @@ for i = 1:numTestFiles
             end
             
             cb_eleven = combinedTrainCodebooks{spk}.eleven;
-            dists_eleven = pdist2(mfcc_test, cb_eleven, 'euclidean').^2;
+            dists_eleven = disteu(mfcc_test, cb_eleven').^2;
             distortion_eleven = mean(min(dists_eleven, [], 2));
             
             cb_five = combinedTrainCodebooks{spk}.five;
-            dists_five = pdist2(mfcc_test, cb_five, 'euclidean').^2;
+            dists_five = disteu(mfcc_test, cb_five').^2;
             distortion_five = mean(min(dists_five, [], 2));
             
             if distortion_eleven < distortion_five

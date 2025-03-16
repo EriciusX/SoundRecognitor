@@ -68,7 +68,6 @@ ylabel('Amplitude');
 title('Signal after Trimming in Time Domain');
 
 %% Test 2.2
-
 % Plot spectrogram of speech signal for different frame sizes
 frame_sizes = [128, 256, 512];
 
@@ -191,7 +190,8 @@ hold off;
 
 %% Test 3.2
 % Plot spectrogram before wrapping
-figure;
+fig6 = figure;
+set(fig6, 'Position', [900, screenHeight-500, 600, 400]);
 subplot(2,1,1);
 imagesc(t, f, stft_result_db);
 axis xy;  % Put low frequencies at bottom
@@ -411,3 +411,32 @@ ylabel(sprintf('MFCC - %d', dim2));
 legend({'Speaker 2', 'Speaker 10', 'Speaker 2 VQ', 'Speaker 10 VQ'}, 'Location', 'best');
 grid on;
 hold off;
+
+%% visualization Average Frequency Spectrum for Test Audio
+freqBins = [];
+avgSpectrum = [];
+
+totalSpectra = zeros(frameLength/2+1, 1);
+totalFiles = 0;
+
+for i = 1:numTestFiles
+    testFile = sprintf(testFiles, i);
+    if exist(testFile, 'file')
+        [y, Fs] = autoTrimSilence(testFile);
+        [Pxx, f] = pwelch(y, hamming(frameLength), frameLength/2, frameLength, Fs);
+        totalSpectra = totalSpectra + Pxx;
+        totalFiles = totalFiles + 1;
+    end
+end
+
+if totalFiles > 0
+    avgSpectrum = totalSpectra / totalFiles;
+end
+
+fig7 = figure;
+set(fig7, 'Position', [100, screenHeight-1200, 600, 400]);
+plot(f, 10*log10(avgSpectrum));
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+title('Average Frequency Spectrum of Trimmed Test Audio');
+grid on;

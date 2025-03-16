@@ -24,11 +24,6 @@ targetCodebookSize = 16;  % Desired number of codewords in the final codebook
 epsilon = 0.01;           % Splitting parameter
 tol = 1e-3;               % Iteration stopping threshold
 
-% Notch filter parameters (for later experiments)
-f0 = 1500;  % Center frequency in Hz
-Q  = 30;    % Quality factor
-R  = 1;     % Pole radius
-
 %% 2. Original Experiment: Recognition using "Zero" and "Twelve" Utterances
 
 % Build VQ codebooks for each training speaker
@@ -90,14 +85,14 @@ for i = 1:numTestFiles
     if exist(testZeroFile, 'file')
         [y_zero, Fs_zero] = autoTrimSilence(testZeroFile, frameLength, 0.03);
         mfcc_test = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
+       
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
             if isempty(trainCodebooks_zero{spk})
                 continue;
             end
-            cb_combined = trainCodebooks_zero{spk};
-            dists = pdist2(mfcc_test, cb_combined, 'euclidean').^2;
+            cb_zero = trainCodebooks_zero{spk};
+            dists = disteu(mfcc_test, cb_zero').^2;
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
@@ -119,14 +114,14 @@ for i = 1:numTestFiles
     if exist(testTwelveFile, 'file')
         [y_twelve, Fs_twelve] = autoTrimSilence(testTwelveFile, frameLength, 0.03);
         mfcc_test = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
+
         distortions = inf(numTrainingFiles, 1);
         for spk = 1:numTrainingFiles
             if isempty(trainCodebooks_twelve{spk})
                 continue;
             end
-            cb_combined = trainCodebooks_twelve{spk};
-            dists = pdist2(mfcc_test, cb_combined, 'euclidean').^2;
+            cb_twelve = trainCodebooks_twelve{spk};
+            dists = disteu(mfcc_test, cb_twelve').^2;
             distortions(spk) = mean(min(dists, [], 2));
         end
         [~, predicted] = min(distortions);
@@ -138,7 +133,7 @@ for i = 1:numTestFiles
     end
 end
 accuracy_combined_twelve = correct_combined_twelve / total_combined_twelve;
-fprintf('"Twelve" Test Accuracy: %.2f%%\n', accuracy_combined_twelve * 100);
+fprintf('"Twelve" Test Accuracy: %.2f%%\n\n', accuracy_combined_twelve * 100);
 
 %% Question 2
 totalTests = 0;
@@ -152,7 +147,6 @@ for i = 1:numTestFiles
     if exist(testFile, 'file')
         [y_zero, Fs_zero] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_zero, Fs_zero, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
         
         bestDistortion = Inf;
         predictedSpeaker = NaN;
@@ -166,12 +160,12 @@ for i = 1:numTestFiles
             
             % Distortion for "zero" codebook
             cb_zero = combinedTrainCodebooks{spk}.zero;
-            dists_zero = pdist2(mfcc_test, cb_zero, 'euclidean').^2;
+            dists_zero = disteu(mfcc_test, cb_zero').^2;
             distortion_zero = mean(min(dists_zero, [], 2));
             
             % Distortion for "twelve" codebook
             cb_twelve = combinedTrainCodebooks{spk}.twelve;
-            dists_twelve = pdist2(mfcc_test, cb_twelve, 'euclidean').^2;
+            dists_twelve = disteu(mfcc_test, cb_twelve').^2;
             distortion_twelve = mean(min(dists_twelve, [], 2));
             
             % Choose the lower distortion between "zero" and "twelve" for speaker spk
@@ -215,7 +209,6 @@ for i = 1:numTestFiles
     if exist(testFile, 'file')
         [y_twelve, Fs_twelve] = autoTrimSilence(testFile, frameLength, 0.03);
         mfcc_test = mfcc(y_twelve, Fs_twelve, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';  % Each row is a feature vector
         
         bestDistortion = Inf;
         predictedSpeaker = NaN;
@@ -227,11 +220,11 @@ for i = 1:numTestFiles
             end
             
             cb_zero = combinedTrainCodebooks{spk}.zero;
-            dists_zero = pdist2(mfcc_test, cb_zero, 'euclidean').^2;
+            dists_zero = disteu(mfcc_test, cb_zero').^2;
             distortion_zero = mean(min(dists_zero, [], 2));
             
             cb_twelve = combinedTrainCodebooks{spk}.twelve;
-            dists_twelve = pdist2(mfcc_test, cb_twelve, 'euclidean').^2;
+            dists_twelve = disteu(mfcc_test, cb_twelve').^2;
             distortion_twelve = mean(min(dists_twelve, [], 2));
             
             if distortion_zero < distortion_twelve

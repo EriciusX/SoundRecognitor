@@ -60,14 +60,9 @@ numMfccCoeffs = 20;      % Total number of MFCC coefficients
 select_coef   = 1;     % Selector for frame filtering based on power (default: 1).
 
 % VQ-LBG parameters
-targetCodebookSize = 8; % The desired number of codewords in the final codebook
+targetCodebookSize = 16; % The desired number of codewords in the final codebook
 epsilon = 0.01;          % Splitting parameter
 tol = 1e-3;              % Iteration stopping threshold
-
-% Notch filter parameters
-f0 = 1500; % center frequency
-Q = 30;    % quality factor
-R = 1;     % Pole radius
 
 %% 2. Build VQ codebooks for each training speaker
 
@@ -94,7 +89,6 @@ for i = 1:num_test_all
     [y, Fs] = autoTrimSilence(testFile);
     % Extract MFCC features for the test file
     mfcc_test = mfcc(y, Fs, frameLength, numMelFilters, numMfccCoeffs);
-    mfcc_test = mfcc_test'; 
     
     % Compute average distortion for each speaker's codebook
     distortions = zeros(num_test_all, 1);
@@ -104,7 +98,7 @@ for i = 1:num_test_all
         cb = trainCodebooks{spk};
 
         % Compute Euclidean distances (squared) between test vectors and codebook vectors
-        dists = pdist2(mfcc_test, cb, 'euclidean').^2;
+        dists = disteu(mfcc_test, cb').^2;
 
         % For each test vector, take the minimum distance to any codeword
         min_dists = min(dists, [], 2);

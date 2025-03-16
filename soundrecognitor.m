@@ -27,9 +27,9 @@ epsilon            = 0.01; % Splitting parameter
 tol                = 1e-3; % Iteration stopping threshold
 
 % Notch filter parameters
-f0 = 1500; % center frequency
-Q  = 30;   % quality factor
-R  = 1;    % Pole radius
+f0 = [500, 1000, 1500, 2500]; % center frequency
+Q  = 30;                      % quality factor
+R  = 1;                       % Pole radius
 
 %% 2. Build VQ codebooks for each training speaker
 
@@ -59,7 +59,6 @@ for i = 1:numTestFiles
         % Extract MFCC features for the test file
         [y, Fs] = autoTrimSilence(testFile, frameLength);
         mfcc_test = mfcc(y, Fs, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test'; 
         
         % Compute average distortion for each speaker's codebook
         distortions = inf(numTrainingFiles, 1);
@@ -72,7 +71,7 @@ for i = 1:numTestFiles
     
             % Compute Euclidean distances (squared) between test vectors and codebook vectors
             
-            dists = pdist2(mfcc_test, cb, 'euclidean').^2;
+            dists = disteu(mfcc_test, cb').^2;
     
             % For each test vector, take the minimum distance to any codeword
             min_dists = min(dists, [], 2);
@@ -96,48 +95,49 @@ recognitionRate = correct / total;
 fprintf('Overall Recognition Rate: %.2f%%\n\n', recognitionRate * 100);
 
 %% 4. Speaker Recognition on the Test Set with Notch Filter
-
-correct = 0;  % Counter for correct recognition
-total = 0;    % Total number of test files
-
-for i = 1:numTestFiles
-    testFile = sprintf(testFiles, i);
-    if exist(testFile, 'file')
-        % Read the audio file
-        [y, Fs] = autoTrimSilence(testFile, frameLength);
-        
-        % Apply the notch filter to the audio signal
-        y_filtered = NotchFilter(y, Fs, f0, Q);
-        
-        % Extract MFCC features from the filtered signal.
-        mfcc_test = mfcc(y_filtered, Fs, frameLength, numMelFilters, numMfccCoeffs, select_coef);
-        mfcc_test = mfcc_test';
-        
-        % Compute average distortion for each speaker's codebook (same as before)
-        distortions = inf(numTrainingFiles, 1);
-        for spk = 1:numTrainingFiles
-            if isempty(trainCodebooks{spk})
-                continue;
+for f = f0
+    fprintf('f0: %d\n', f);
+    % Test Set with Notch Filter
+    correct = 0;  % Counter for correct recognition
+    total = 0;    % Total number of test files
+    
+    for i = 1:numTestFiles
+        testFile = sprintf(testFiles, i);
+        if exist(testFile, 'file')
+            % Read the audio file
+            [y, Fs] = autoTrimSilence(testFile, frameLength);
+            
+            % Apply the notch filter to the audio signal
+            y_filtered = NotchFilter(y, Fs, f, Q);
+            
+            % Extract MFCC features from the filtered signal.
+            mfcc_test = mfcc(y_filtered, Fs, frameLength, numMelFilters, numMfccCoeffs, select_coef);
+            
+            % Compute average distortion for each speaker's codebook (same as before)
+            distortions = inf(numTrainingFiles, 1);
+            for spk = 1:numTrainingFiles
+                if isempty(trainCodebooks{spk})
+                    continue;
+                end
+                cb = trainCodebooks{spk};
+                dists = disteu(mfcc_test, cb').^2;
+                min_dists = min(dists, [], 2);
+                distortions(spk) = mean(min_dists);
             end
-            cb = trainCodebooks{spk};
-            dists = pdist2(mfcc_test, cb, 'euclidean').^2;
-            min_dists = min(dists, [], 2);
-            distortions(spk) = mean(min_dists);
+            
+            % The predicted speaker is the one with the minimum average distortion
+            [~, predicted] = min(distortions);
+            fprintf('True Speaker: %d, Predicted Speaker (Notch Filtered): %d\n', i, predicted);
+            
+            if predicted == i
+                correct = correct + 1;
+            end
+            total = total + 1;
         end
-        
-        % The predicted speaker is the one with the minimum average distortion
-        [~, predicted] = min(distortions);
-        fprintf('True Speaker: %d, Predicted Speaker (Notch Filtered): %d\n', i, predicted);
-        
-        if predicted == i
-            correct = correct + 1;
-        end
-        total = total + 1;
     end
+    recognitionRate = correct / total;
+    fprintf('Overall Recognition Rate: %.2f%%\n\n', recognitionRate * 100);
 end
-
-recognitionRate = correct / total;
-fprintf('Overall Recognition Rate: %.2f%%\n', recognitionRate * 100);
 
 %% Function of Notch filter
 function y_filtered = NotchFilter(y, Fs, f0, Q, R)
