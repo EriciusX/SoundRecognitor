@@ -90,7 +90,7 @@ Recognition Rate: 87.50%
 
 ### TEST 2: Analyzing Speech Signal
 
-The purpose of this test is to analyze the speech signal by  visualizing the signal in the time domain. The `autoTrimSilence.m` function is also used to trim silence from the signal data, focusing on the voice  segment.
+The purpose of this test is to analyze the speech signal by  visualizing the signal in the time domain. The [autoTrimSilence](autoTrimSilence.m) function is also used to trim silence from the signal data, focusing on the voice  segment.
 
 1. **Play Sound in MATLAB:**
 
