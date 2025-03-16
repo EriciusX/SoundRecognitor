@@ -59,8 +59,6 @@ Team members (contribution): **Chenghao Xue** (50%), **Guanyu Mi** (50%).
 
 ## Project Tasks
 
----
-
 You can use [visualization.m](./visualization.m) to show the results from Test 1 to Test 6.
 
 ```shell
@@ -305,12 +303,12 @@ Overall Recognition Rate: 100.00%
 
 ---
 
-### Test 9: Evaluating System Performance with Non-Student Voices
+### Test 9: Assessing System Robustness with Non-Student Voices
 
-You can get the results of Test 10a by running the following command:
+You can get the results of Test 9 by running the following command:
 
 ```shell
-matlab -batch "run('test_9.m')"
+matlab -batch "run('test9.m')"
 ```
 
 Then, you will first get speakers used in the training set, including 10 speakers randomly chosen from **2024StudentAudioRecording** , and then the true and predicted speakers for each test file, and finally the overall recognition rate.
@@ -366,7 +364,7 @@ Overall Recognition Rate: 94.44%
 
 Dataset: **2024StudentAudioRecording**
 
-You can get the results of Test 10b by running the following command:
+You can get the results of Test 10a by running the following command:
 
 ```shell
 matlab -batch "run('test10a.m')"
@@ -473,7 +471,7 @@ matlab -batch "run('test10a.m')"
 
 Dataset: **EEC201AudioRecordings**
 
-You can get the results of Test 9 by running the following command:
+You can get the results of Test 10b by running the following command:
 
 ```shell
 matlab -batch "run('test10b.m')"
