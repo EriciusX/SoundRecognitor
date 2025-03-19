@@ -96,6 +96,7 @@ The purpose of this test is to analyze the speech signal by  visualizing the sig
 2. **Time Duration Calculation:**
 
    - Given the sampling rate, calculated how many milliseconds of speech are contained in a block of 256 samples using the formula:
+   
      $$
      \text{Duration (ms)} = \frac{256}{\text{Sampling Rate}} \times 1000
      $$
