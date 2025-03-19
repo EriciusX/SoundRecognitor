@@ -114,12 +114,14 @@ The purpose of this test is to analyze the speech signal by  visualizing the sig
 The trimmed signal removes the silent portions, providing a clearer view of the voice segment, which helps in focusing the analysis on the actual speech data.
 
 4. **STFT:**
-   - Tried different frame sizes $ N $ (128, 256, and 512) with frame increment $ M \approx \frac{N}{3} $.
-   - Identified the region in the plot that contains most of the energy.
-   - Also plot the power spectrum of the trimmed signal.
+- Tried different frame sizes $N$ (128, 256, and 512) with frame increment $M \approx \frac{N}{3}$.
+- Identified the region in the plot that contains most of the energy.
+- Also plot the power spectrum of the trimmed signal.
 
 Frame size N=128: Maximum energy at 605.44 ms and 781.25 Hz
+
 Frame size N=256: Maximum energy at 591.60 ms and 732.42 Hz
+
 Frame size N=512: Maximum energy at 574.56 ms and 756.84 Hz
 
 ![STFT](./results/stft.png)
